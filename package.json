@@ -1,0 +1,18 @@
+{
+  "name": "btl-oop-wms",
+  "version": "1.0.0",
+  "description": "He thong quan ly kho hang va ban hang (WMS) - BTL OOP C++",
+  "main": "api/index.js",
+  "scripts": {
+    "build": "node -e \"const fs = require('fs'); if (fs.existsSync('BTL_OOP/WMS/frontend')) { fs.cpSync('BTL_OOP/WMS/frontend', 'public', { recursive: true }); }\"",
+    "start": "node api/index.js"
+  },
+  "keywords": [
+    "wms",
+    "oop",
+    "cpp",
+    "vercel"
+  ],
+  "author": "",
+  "license": "ISC"
+}

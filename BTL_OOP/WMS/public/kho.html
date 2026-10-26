@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Kho Hàng (WMS) - OOP C++</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <header class="navbar">
+        <a href="index.html" class="nav-brand">
+            📦 WMS Store
+            <span class="brand-badge">OOP C++</span>
+        </a>
+        <ul class="nav-menu" id="nav-menu-container"></ul>
+        <div class="nav-auth" id="nav-auth-container"></div>
+    </header>
+
+    <div class="container">
+        <!-- Banner Observer Alert -->
+        <div id="observer-alert-banner" style="display: none;"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Tồn kho hiện tại</h2>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Số lượng chỉ tăng sau khi quản lý duyệt phiếu nhập.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="taiTonKhoHienTai()">Làm mới</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Mã hàng</th><th>Sản phẩm</th><th>Vị trí</th><th>Tồn hiện tại</th><th>Ngưỡng tối thiểu</th><th>Tình trạng</th></tr></thead>
+                    <tbody id="bang-ton-kho-body"><tr><td colspan="6" style="text-align:center;">Đang tải tồn kho...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">🏭 Theo Dõi Tồn Kho & Quản Lý Nhập Hàng</h2>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;">
+                        Theo dõi số lượng hàng tồn &bull; Gửi phiếu nhập chờ quản lý duyệt &bull; Kiểm kê và xử lý cảnh báo thiếu hàng / cận hạn
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-primary" onclick="moModalNhapKho()">📥 Lập Phiếu Nhập Hàng</button>
+                    <button class="btn btn-warning" onclick="moModalKiemKe()">📋 Lập Phiếu Kiểm Kê</button>
+                </div>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div style="display: flex; gap: 10px; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <button class="btn btn-outline btn-sm active" id="tab-btn-nhap" onclick="chuyenTab('nhap')">📥 Phiếu Nhập Kho (PO)</button>
+                <button class="btn btn-outline btn-sm" id="tab-btn-kiemke" onclick="chuyenTab('kiemke')">📋 Phiếu Kiểm Kê Kho</button>
+                <button class="btn btn-outline btn-sm" id="tab-btn-canhbao" onclick="chuyenTab('canhbao')">🔔 Cảnh Báo Observer</button>
+            </div>
+
+            <!-- Tab 1: Danh sach phieu nhap kho -->
+            <div id="tab-nhap" class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Mã Phiếu</th>
+                            <th>Ngày Giờ Nhập</th>
+                            <th>Nhà Cung Cấp</th>
+                            <th>Người Lập Phiếu</th>
+                            <th>Chi Tiết Mặt Hàng</th>
+                            <th>Tổng Tiền</th>
+                            <th>Ghi Chú</th>
+                            <th>Trạng Thái</th>
+                            <th>Duyệt Phiếu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bang-nhap-kho-body">
+                        <tr><td colspan="7" style="text-align: center;">Đang tải dữ liệu phiếu nhập...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab 2: Danh sach phieu kiem ke kho -->
+            <div id="tab-kiemke" class="table-responsive" style="display: none;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Mã Kiểm Kê</th>
+                            <th>Thời Gian</th>
+                            <th>Người Kiểm Kê</th>
+                            <th>Sản Phẩm</th>
+                            <th>Tồn Sổ Sách</th>
+                            <th>Tồn Thực Tế</th>
+                            <th>Chênh Lệch</th>
+                            <th>Lý Do</th>
+                            <th>Cách Xử Lý</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bang-kiem-ke-body">
+                        <tr><td colspan="9" style="text-align: center;">Đang tải dữ liệu kiểm kê...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab 3: Canh bao Observer Pattern -->
+            <div id="tab-canhbao" style="display: none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h4 style="color:var(--primary-hover);">🔔 Danh Sách Cảnh Báo Tự Động Từ Observer Pattern</h4>
+                    <button class="btn btn-outline btn-sm" onclick="danhDauDaDocTatCaCanhBao()">Đánh dấu đã đọc tất cả</button>
+                </div>
+                <div id="danh-sach-canh-bao-list">
+                    <!-- Render dong qua JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lap Phieu Nhap Kho -->
+    <div id="modal-nhap-kho" class="modal-overlay">
+        <div class="modal-content">
+            <div class="card-header">
+                <h3 class="card-title">📥 Lập Phiếu Nhập Kho Từ Nhà Cung Cấp</h3>
+                <button class="btn btn-outline btn-sm" onclick="dongModalNhapKho()">✕</button>
+            </div>
+            <form id="form-nhap-kho" onsubmit="xuLyLuuPhieuNhap(event)">
+                <div class="form-group">
+                    <label class="form-label">Tên nhà cung cấp: *</label>
+                    <select id="nhap-ncc-select" class="form-control" required onchange="capNhatNhaCungCapKhac()">
+                        <option value="">-- Chọn nhà cung cấp --</option>
+                        <option value="Công ty TNHH Phân Phối Hà Nội">Công ty TNHH Phân Phối Hà Nội</option>
+                        <option value="Công ty Cổ phần Thương mại An Phát">Công ty Cổ phần Thương mại An Phát</option>
+                        <option value="Công ty TNHH Thực phẩm Sạch Việt">Công ty TNHH Thực phẩm Sạch Việt</option>
+                        <option value="Công ty Cổ phần Sữa Việt Nam (Vinamilk)">Công ty Cổ phần Sữa Việt Nam (Vinamilk)</option>
+                        <option value="Công ty TNHH MM Mega Market Việt Nam">Công ty TNHH MM Mega Market Việt Nam</option>
+                        <option value="Công ty Cổ phần Bán lẻ Kỹ thuật số FPT">Công ty Cổ phần Bán lẻ Kỹ thuật số FPT</option>
+                        <option value="KHAC">Nhà cung cấp khác...</option>
+                    </select>
+                    <input type="text" id="nhap-ncc-khac" class="form-control" style="display:none; margin-top:8px;" placeholder="Nhập tên nhà cung cấp khác">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chọn sản phẩm nhập: *</label>
+                    <select id="nhap-masp" class="form-control" required onchange="capNhatGiaNhapGoiY(this.value)">
+                        <!-- Render danh sach san pham -->
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Số lượng nhập: *</label>
+                        <input type="number" id="nhap-soluong" class="form-control" required min="1" step="0.5" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Đơn giá nhập (₫): *</label>
+                        <input type="number" id="nhap-dongia" class="form-control" required min="0" step="1000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hạn sử dụng mới (Nếu là SP có HSD):</label>
+                    <input type="date" id="nhap-hsd" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ghi chú phiếu nhập:</label>
+                    <input type="text" id="nhap-ghichu" class="form-control" placeholder="Nhập lô mới, hóa đơn VAT số...">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
+                    <button type="button" class="btn btn-outline" onclick="dongModalNhapKho()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Xác Nhận Nhập Kho</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Lap Phieu Kiem Ke Kho -->
+    <div id="modal-kiem-ke" class="modal-overlay">
+        <div class="modal-content">
+            <div class="card-header">
+                <h3 class="card-title">📋 Lập Phiếu Kiểm Kê Kho Hàng</h3>
+                <button class="btn btn-outline btn-sm" onclick="dongModalKiemKe()">✕</button>
+            </div>
+            <form id="form-kiem-ke" onsubmit="xuLyLuuKiemKe(event)">
+                <div class="form-group">
+                    <label class="form-label">Chọn sản phẩm kiểm kê: *</label>
+                    <select id="kk-masp" class="form-control" required onchange="capNhatTonSoSach(this.value)">
+                        <!-- Render danh sach san pham -->
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Tồn theo sổ sách (Hệ thống):</label>
+                        <input type="number" id="kk-tonsosach" class="form-control" readonly style="background:#f1f5f9;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số lượng thực tế đếm được: *</label>
+                        <input type="number" id="kk-tonthucte" class="form-control" required step="0.5" oninput="tinhChenhLech()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chênh lệch (Thực tế - Sổ sách):</label>
+                    <input type="text" id="kk-chenhlech" class="form-control" readonly style="font-weight:700; color:var(--danger); background:#f1f5f9;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lý do chênh lệch:</label>
+                    <input type="text" id="kk-lydo" class="form-control" placeholder="Hao hụt tự nhiên / Hàng vỡ móp / Thất thoát...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cách xử lý (Điều chỉnh tồn kho):</label>
+                    <select id="kk-cachxuly" class="form-control">
+                        <option value="DIEU_CHINH_CAN_BANG">Cân bằng lại theo tồn thực tế</option>
+                        <option value="GHI_NHAN_HU_HAI">Ghi nhận hư hại & thanh lý</option>
+                        <option value="THU_HOI_BOI_THUONG">Yêu cầu bồi thường cá nhân</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
+                    <button type="button" class="btn btn-outline" onclick="dongModalKiemKe()">Hủy</button>
+                    <button type="submit" class="btn btn-warning">Xác Nhận Cân Bằng Kho</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        Auth.kiemTraQuyen(['ADMIN', 'QUAN_LY_KHO']);
+
+        let danhSachSP = [];
+
+        async function taiTonKhoHienTai() {
+            const tbody = document.getElementById('bang-ton-kho-body');
+            try {
+                const res = await fetch('/api/san-pham');
+                const data = await res.json();
+                if (!data.thanhCong || !Array.isArray(data.danhSach)) throw new Error('Không tải được danh sách sản phẩm');
+                const danhSach = data.danhSach;
+                tbody.innerHTML = danhSach.map(sp => `
+                    <tr>
+                        <td><strong>${sp.maSP}</strong></td>
+                        <td>${sp.tenSP}</td>
+                        <td>${sp.viTriKho || '—'}</td>
+                        <td><strong>${sp.soLuongTon} ${sp.donViTinh}</strong></td>
+                        <td>${sp.tonToiThieu} ${sp.donViTinh}</td>
+                        <td>${sp.canhBaoTon ? '<span class="badge badge-danger">Cần nhập hàng</span>' : '<span class="badge badge-success">Đủ hàng</span>'}</td>
+                    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;">Chưa có sản phẩm.</td></tr>';
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không tải được tồn kho.</td></tr>';
+            }
+        }
+
+        function chuyenTab(tab) {
+            document.getElementById('tab-nhap').style.display = (tab === 'nhap') ? 'block' : 'none';
+            document.getElementById('tab-kiemke').style.display = (tab === 'kiemke') ? 'block' : 'none';
+            document.getElementById('tab-canhbao').style.display = (tab === 'canhbao') ? 'block' : 'none';
+
+            document.getElementById('tab-btn-nhap').className = (tab === 'nhap') ? 'btn btn-outline btn-sm active' : 'btn btn-outline btn-sm';
+            document.getElementById('tab-btn-kiemke').className = (tab === 'kiemke') ? 'btn btn-outline btn-sm active' : 'btn btn-outline btn-sm';
+            document.getElementById('tab-btn-canhbao').className = (tab === 'canhbao') ? 'btn btn-outline btn-sm active' : 'btn btn-outline btn-sm';
+
+            if (tab === 'nhap') taiDanhSachNhapKho();
+            else if (tab === 'kiemke') taiDanhSachKiemKe();
+            else if (tab === 'canhbao') taiDanhSachCanhBao();
+        }
+
+        async function taiDanhSachSPChoSelect() {
+            try {
+                const res = await fetch('/api/san-pham');
+                const data = await res.json();
+                if (data.thanhCong) {
+                    danhSachSP = data.danhSach;
+                    const options = danhSachSP.map(sp => `<option value="${sp.maSP}">${sp.maSP} - ${sp.tenSP} (Tồn: ${sp.soLuongTon} ${sp.donViTinh})</option>`).join('');
+                    document.getElementById('nhap-masp').innerHTML = options;
+                    document.getElementById('kk-masp').innerHTML = options;
+                    if (danhSachSP.length > 0) {
+                        capNhatGiaNhapGoiY(danhSachSP[0].maSP);
+                        capNhatTonSoSach(danhSachSP[0].maSP);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function capNhatGiaNhapGoiY(maSP) {
+            const sp = danhSachSP.find(x => x.maSP === maSP);
+            if (sp) {
+                document.getElementById('nhap-dongia').value = sp.giaNhap;
+            }
+        }
+
+        function capNhatTonSoSach(maSP) {
+            const sp = danhSachSP.find(x => x.maSP === maSP);
+            if (sp) {
+                document.getElementById('kk-tonsosach').value = sp.soLuongTon;
+                tinhChenhLech();
+            }
+        }
+
+        function tinhChenhLech() {
+            const soSach = Number(document.getElementById('kk-tonsosach').value) || 0;
+            const thucTe = Number(document.getElementById('kk-tonthucte').value) || 0;
+            const chenh = thucTe - soSach;
+            document.getElementById('kk-chenhlech').value = (chenh > 0 ? '+' : '') + chenh;
+        }
+
+        // Nhap kho
+        async function taiDanhSachNhapKho() {
+            try {
+                const res = await fetch('/api/kho/nhap');
+                const data = await res.json();
+                const tbody = document.getElementById('bang-nhap-kho-body');
+                if (data.thanhCong && data.danhSach.length > 0) {
+                    tbody.innerHTML = data.danhSach.map(pn => {
+                        const ctStr = pn.danhSachChiTiet.map(c => `• ${c.tenSP} (${c.soLuong} ${c.donViTinh || ''} x ${dinhDangTien(c.donGiaNhap)})`).join('<br>');
+                        const choDuyet = pn.trangThai === 'CHO_DUYET';
+                        const trangThai = choDuyet
+                            ? '<span class="badge badge-warning">Chờ quản lý duyệt</span>'
+                            : '<span class="badge badge-success">Đã duyệt · đã cộng tồn</span>';
+                        const nutDuyet = userLaAdmin() && choDuyet
+                            ? `<button class="btn btn-primary btn-sm" onclick="duyetPhieuNhap('${pn.maPhieu}')">Duyệt nhập kho</button>`
+                            : '—';
+                        return `
+                            <tr>
+                                <td><strong>${pn.maPhieu}</strong></td>
+                                <td>${pn.ngayNhap}</td>
+                                <td><strong>${pn.nhaCungCap}</strong></td>
+                                <td>${pn.nguoiLapPhieu}</td>
+                                <td><small>${ctStr}</small></td>
+                                <td><strong style="color:var(--primary);">${dinhDangTien(pn.tongTien)}</strong></td>
+                                <td>${pn.ghiChu || '-'}</td>
+                                <td>${trangThai}</td>
+                                <td>${nutDuyet}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Chưa có phiếu nhập kho nào!</td></tr>';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function userLaAdmin() {
+            const user = Auth.layNguoiDungHienTai();
+            return !!user && user.vaiTro === 'ADMIN';
+        }
+
+        async function duyetPhieuNhap(maPhieu) {
+            if (!confirm(`Duyệt phiếu ${maPhieu} và cộng số lượng vào tồn kho?`)) return;
+            try {
+                const res = await fetch('/api/kho/nhap/duyet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Auth.layToken()}`
+                    },
+                    body: JSON.stringify({ maPhieu })
+                });
+                const data = await res.json();
+                alert(data.thongBao);
+                if (data.thanhCong) {
+                    taiDanhSachNhapKho();
+                    taiDanhSachSPChoSelect();
+                    taiTonKhoHienTai();
+                }
+            } catch (err) {
+                alert('Lỗi kết nối máy chủ!');
+            }
+        }
+
+        function moModalNhapKho() {
+            document.getElementById('form-nhap-kho').reset();
+            capNhatNhaCungCapKhac();
+            taiDanhSachSPChoSelect();
+            document.getElementById('modal-nhap-kho').style.display = 'flex';
+        }
+
+        function capNhatNhaCungCapKhac() {
+            const select = document.getElementById('nhap-ncc-select');
+            const inputKhac = document.getElementById('nhap-ncc-khac');
+            const chonKhac = select.value === 'KHAC';
+            inputKhac.style.display = chonKhac ? 'block' : 'none';
+            inputKhac.required = chonKhac;
+            if (!chonKhac) inputKhac.value = '';
+        }
+
+        function layTenNhaCungCap() {
+            const select = document.getElementById('nhap-ncc-select');
+            return select.value === 'KHAC'
+                ? document.getElementById('nhap-ncc-khac').value.trim()
+                : select.value;
+        }
+
+        function dongModalNhapKho() {
+            document.getElementById('modal-nhap-kho').style.display = 'none';
+        }
+
+        async function xuLyLuuPhieuNhap(e) {
+            e.preventDefault();
+            const user = Auth.layNguoiDungHienTai();
+            const payload = {
+                nhaCungCap: layTenNhaCungCap(),
+                maSP: document.getElementById('nhap-masp').value,
+                soLuong: Number(document.getElementById('nhap-soluong').value),
+                donGiaNhap: Number(document.getElementById('nhap-dongia').value),
+                hanSuDung: document.getElementById('nhap-hsd').value,
+                ghiChu: document.getElementById('nhap-ghichu').value,
+                nguoiLapPhieu: user ? user.hoTen : 'Thủ Kho'
+            };
+
+            try {
+                const res = await fetch('/api/kho/nhap', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.thanhCong) {
+                    alert('📨 ' + data.thongBao);
+                    dongModalNhapKho();
+                    taiDanhSachNhapKho();
+                } else {
+                    alert('❌ ' + data.thongBao);
+                }
+            } catch (err) {
+                alert('Lỗi kết nối máy chủ!');
+            }
+        }
+
+        // Kiem ke
+        async function taiDanhSachKiemKe() {
+            try {
+                const res = await fetch('/api/kho/kiem-ke');
+                const data = await res.json();
+                const tbody = document.getElementById('bang-kiem-ke-body');
+                if (data.thanhCong && data.danhSach.length > 0) {
+                    tbody.innerHTML = data.danhSach.map(kk => {
+                        let colorChenh = kk.chenhLech === 0 ? 'var(--success)' : 'var(--danger)';
+                        return `
+                            <tr>
+                                <td><strong>${kk.maKiemKe}</strong></td>
+                                <td>${kk.ngayKiemKe}</td>
+                                <td>${kk.nguoiKiemKe}</td>
+                                <td><strong>${kk.tenSP}</strong> (${kk.maSP})</td>
+                                <td>${kk.tonSoSach}</td>
+                                <td><strong>${kk.tonThucTe}</strong></td>
+                                <td><strong style="color:${colorChenh};">${kk.chenhLech > 0 ? '+' : ''}${kk.chenhLech}</strong></td>
+                                <td>${kk.lyDo || '-'}</td>
+                                <td><span class="badge badge-primary">${kk.cachXuLy}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Chưa có phiếu kiểm kê nào!</td></tr>';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function moModalKiemKe() {
+            document.getElementById('form-kiem-ke').reset();
+            taiDanhSachSPChoSelect();
+            document.getElementById('modal-kiem-ke').style.display = 'flex';
+        }
+
+        function dongModalKiemKe() {
+            document.getElementById('modal-kiem-ke').style.display = 'none';
+        }
+
+        async function xuLyLuuKiemKe(e) {
+            e.preventDefault();
+            const user = Auth.layNguoiDungHienTai();
+            const payload = {
+                maSP: document.getElementById('kk-masp').value,
+                tonThucTe: Number(document.getElementById('kk-tonthucte').value),
+                lyDo: document.getElementById('kk-lydo').value,
+                cachXuLy: document.getElementById('kk-cachxuly').value,
+                nguoiKiemKe: user ? user.hoTen : 'Thủ Kho'
+            };
+
+            try {
+                const res = await fetch('/api/kho/kiem-ke', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.thanhCong) {
+                    alert('🎉 ' + data.thongBao);
+                    dongModalKiemKe();
+                    chuyenTab('kiemke');
+                } else {
+                    alert('❌ ' + data.thongBao);
+                }
+            } catch (err) {
+                alert('Lỗi kết nối máy chủ!');
+            }
+        }
+
+        // Canh bao Observer
+        async function taiDanhSachCanhBao() {
+            try {
+                const res = await fetch('/api/kho/canh-bao');
+                const data = await res.json();
+                const container = document.getElementById('danh-sach-canh-bao-list');
+                if (data.thanhCong && data.danhSach.length > 0) {
+                    container.innerHTML = data.danhSach.map(cb => {
+                        let badgeLoai = cb.loaiCanhBao === 'HET_HANG' 
+                            ? '<span class="badge badge-danger">Hết Hàng / Dưới Min</span>'
+                            : (cb.loaiCanhBao === 'SAP_HET_HAN' ? '<span class="badge badge-warning">Cận Date / FEFO</span>' : '<span class="badge badge-info">Kiểm Kê Kho</span>');
+                        return `
+                            <div class="card" style="padding:1rem; margin-bottom:0.8rem; border-left: 4px solid var(--primary);">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        ${badgeLoai}
+                                        <strong style="margin-left: 8px;">${cb.tenSP || cb.maSP}</strong>
+                                    </div>
+                                    <small style="color:var(--text-muted);">${cb.thoiGian}</small>
+                                </div>
+                                <p style="margin-top:6px; font-size:0.92rem; color:var(--text-dark);">${cb.noiDung}</p>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align:center; padding:1.5rem; color:var(--text-muted);">Hiện tại kho không có cảnh báo nào!</p>';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            taiTonKhoHienTai();
+            taiDanhSachNhapKho();
+            taiDanhSachSPChoSelect();
+        });
+    </script>
+</body>
+</html>
+

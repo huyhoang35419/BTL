@@ -1,0 +1,10 @@
+{
+  "name": "wms-subfolder",
+  "version": "1.0.0",
+  "description": "WMS Subfolder Deployment for Vercel",
+  "main": "api/index.js",
+  "scripts": {
+    "build": "node -e \"const fs = require('fs'); if (fs.existsSync('frontend')) { fs.cpSync('frontend', 'public', { recursive: true }); }\"",
+    "start": "node api/index.js"
+  }
+}

@@ -3,8 +3,10 @@
 // ========================================================
 
 // Live Server chỉ phục vụ frontend (thường ở cổng 5500). Chuyển API sang backend WMS.
-// Khi frontend được phục vụ bởi máy chủ C++ ở cổng 8080, API vẫn dùng cùng origin.
-const WMS_API_ORIGIN = window.location.port === '5500' ? 'http://localhost:8080' : '';
+// Khi frontend được phục vụ bởi máy chủ C++ ở cổng 8080 hoặc Vercel Serverless API, API dùng cùng origin.
+// Người dùng cũng có thể ghi đè API origin bằng cách đặt: localStorage.setItem('wms_api_custom', 'https://your-backend.com')
+const customOrigin = (typeof localStorage !== 'undefined' && localStorage.getItem('wms_api_custom')) || '';
+const WMS_API_ORIGIN = customOrigin || (window.location.port === '5500' ? 'http://localhost:8080' : '');
 if (WMS_API_ORIGIN && !window.__wmsFetchConfigured) {
     const fetchGoc = window.fetch.bind(window);
     window.fetch = (resource, options) => {

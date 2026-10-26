@@ -1,0 +1,21 @@
+# Compiled binaries and object files
+*.exe
+*.o
+*.obj
+*.pdb
+*.ilk
+
+# Database files
+*.db
+*.sqlite
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Vercel and Node artifacts
+.vercel
+node_modules/
+npm-debug.log
